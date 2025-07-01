@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import os
 import csv
 from datetime import datetime
+import json
 import openai
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -34,6 +35,7 @@ class JobPreferences:
     salary_range: str = ""
     log_path: str = "applied_jobs.csv"
     skipped_log_path: str = "skipped_jobs.csv"
+    qa_cache_file: str = "qa_cache.json"
 
 
 def login(driver: webdriver.Chrome, creds: Credentials) -> None:
@@ -113,6 +115,69 @@ def log_skipped_job(company: str, title: str, location: str, path: str, reason: 
         writer.writerow([company, title, location, datetime.now().isoformat(), reason])
 
 
+def _load_qa_cache(path: str) -> dict:
+    """Return stored question/answer pairs as a dictionary."""
+    if os.path.isfile(path):
+        try:
+            with open(path, "r", encoding="utf-8") as fh:
+                return json.load(fh)
+        except Exception:
+            return {}
+    return {}
+
+
+def _save_qa_cache(cache: dict, path: str) -> None:
+    """Write the QA cache to disk."""
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(cache, fh, ensure_ascii=False, indent=2)
+
+
+def _answer_with_openai(question: str) -> str:
+    """Query the OpenAI API for a brief answer to the given question."""
+    openai.api_key = os.getenv("OPENAI_API_KEY")
+    prompt = f"Provide a concise answer to the following job application question: {question}"
+    try:
+        resp = openai.ChatCompletion.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=100,
+        )
+        return resp.choices[0].message.content.strip()
+    except Exception as exc:
+        print(f"OpenAI API error: {exc}")
+        return ""
+
+
+def answer_dynamic_questions(driver: webdriver.Chrome, prefs: JobPreferences) -> None:
+    """Handle Naukri's step-by-step question form."""
+    cache = _load_qa_cache(prefs.qa_cache_file)
+    while True:
+        try:
+            question_el = driver.find_element(By.CSS_SELECTOR, "div.question")
+            question = question_el.text.strip()
+        except Exception:
+            break
+
+        if not question:
+            break
+
+        answer = cache.get(question)
+        if not answer:
+            answer = _answer_with_openai(question)
+            cache[question] = answer
+            _save_qa_cache(cache, prefs.qa_cache_file)
+
+        try:
+            input_el = driver.find_element(By.CSS_SELECTOR, "input.answer, textarea.answer")
+            input_el.clear()
+            input_el.send_keys(answer)
+            next_btn = driver.find_element(By.CSS_SELECTOR, "button.next, button[type=submit]")
+            next_btn.click()
+            time.sleep(1)
+        except Exception:
+            break
+
+
 def apply_to_listings(driver: webdriver.Chrome, prefs: JobPreferences) -> None:
     """Iterate through job listings and apply to those matching preferences."""
     jobs = driver.find_elements(By.CSS_SELECTOR, "article.jobTuple")
@@ -137,6 +202,7 @@ def apply_to_listings(driver: webdriver.Chrome, prefs: JobPreferences) -> None:
             if role_match and location_match:
                 apply_btn = job.find_element(By.CSS_SELECTOR, "button.btn-apply")
                 apply_btn.click()
+                answer_dynamic_questions(driver, prefs)
                 log_application(company_name, job_title, location_text, prefs.log_path)
                 time.sleep(2)
                 driver.back()
