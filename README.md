@@ -18,8 +18,9 @@ using Selenium.
 
 ## Usage
 
-Edit `apply_naukri.py` and fill in your login credentials and file paths. Then
-run the script:
+Edit `apply_naukri.py` and fill in your login credentials and file paths.
+If you leave the username and password blank, the script assumes you are already
+logged in using your browser. Then run the script:
 
 ```bash
 python apply_naukri.py
