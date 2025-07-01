@@ -231,14 +231,14 @@ def apply_to_listings(driver: webdriver.Chrome, prefs: JobPreferences) -> None:
 
 def main() -> None:
     creds = Credentials(
-        username='your_username',
-        password='your_password',
-        resume_path='/path/to/resume.pdf'
+        username=None,
+        password=None,
+        resume_path='resume/resume.pdf'
     )
     prefs = JobPreferences(
-        locations=['Bangalore', 'Remote'],
-        job_roles=['Software Engineer'],
-        salary_range='10-12 LPA'
+        locations=['Noida', 'Gurgaon', 'Delhi', 'Delhi-NCR', 'Gurugram' ,'Remote'],
+        job_roles=['Software Engineer', 'Python Developer'],
+        salary_range='16-20 LPA'
     )
 
     driver = create_driver()
