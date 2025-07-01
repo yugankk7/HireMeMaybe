@@ -32,6 +32,10 @@ Naukri.com's terms of service when running automated scripts.
 If enabled, the script can use the OpenAI API (via the `gpt-4o-mini` model) to
 generate a short cover letter for each job based on your resume, location
 preferences and salary range, but this step is disabled by default.
+When Naukri presents additional questions during the application process,
+the script will attempt to answer them one by one. Answers are generated via
+the OpenAI API the first time a question is encountered and stored in
+`qa_cache.json` for reuse on subsequent runs.
 Update the `JobPreferences` section in the script to set your preferred job
 roles and locations. Applications that match these preferences are logged in
 `applied_jobs.csv`. Jobs that do not match (or encounter an error) are stored in
