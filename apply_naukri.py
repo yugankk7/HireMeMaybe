@@ -5,10 +5,16 @@ import os
 import csv
 from datetime import datetime
 import json
+from pathlib import Path
 import openai
+from dotenv import load_dotenv
+
+# Load environment variables from a .env file located next to this script
+load_dotenv(dotenv_path=Path(__file__).with_name('.env'))
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from typing import Iterable
 import time
 
 
@@ -60,11 +66,15 @@ def login(driver: webdriver.Chrome, creds: Credentials) -> None:
     time.sleep(5)
 
 
-def search_jobs(driver: webdriver.Chrome, query: str) -> None:
-    """Perform a job search with the given query."""
+def search_jobs(driver: webdriver.Chrome, queries: Iterable[str] | str) -> None:
+    """Perform a job search with the given job role queries."""
     search_box = driver.find_element(By.ID, 'qsb-keyword-sugg')
     search_box.clear()
-    search_box.send_keys(query)
+    if isinstance(queries, str):
+        query_text = queries
+    else:
+        query_text = " OR ".join(queries)
+    search_box.send_keys(query_text)
     search_box.send_keys(Keys.RETURN)
     time.sleep(3)
 
@@ -244,7 +254,7 @@ def main() -> None:
     driver = create_driver()
     try:
         login(driver, creds)
-        search_jobs(driver, 'Software Engineer')
+        search_jobs(driver, prefs.job_roles)
         apply_to_listings(driver, prefs)
     finally:
         driver.quit()

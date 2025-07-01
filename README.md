@@ -12,9 +12,14 @@ using Selenium.
    ```
 2. Download the appropriate WebDriver for your browser (e.g. `chromedriver`)
    and ensure it is available on your system `PATH`.
-3. Set your OpenAI API key in the `OPENAI_API_KEY` environment variable if you
-   want to generate cover letters (the script uses the `gpt-4o-mini` model but
-   does not generate letters by default).
+3. Create a `.env` file next to `apply_naukri.py` with your OpenAI key:
+
+   ```
+   OPENAI_API_KEY=your-key-here
+   ```
+   The script loads this file automatically if you want to generate cover
+   letters (it uses the `gpt-4o-mini` model but does not generate letters by
+   default).
 
 ## Usage
 
