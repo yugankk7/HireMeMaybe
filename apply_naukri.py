@@ -41,6 +41,10 @@ def login(driver: webdriver.Chrome, creds: Credentials) -> None:
     driver.get('https://www.naukri.com/')
     time.sleep(2)
 
+    # If credentials are blank, assume the user is already logged in
+    if not creds.username and not creds.password:
+        return
+
     login_button = driver.find_element(By.LINK_TEXT, 'Login')
     login_button.click()
     time.sleep(2)
